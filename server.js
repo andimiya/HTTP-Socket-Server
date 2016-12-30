@@ -11,7 +11,7 @@ var server = net.createServer((socket) => {
     var string = chunk;
     var split = string.split(" ");
 
-    var response = `\nHTTP/1.1 200 OK
+    var header = `\nHTTP/1.1 200 OK
     \nServer: nginx/1.4.6 (Ubuntu)
     \nDate: ${timestamp}
     \nContent-Type: text/html; charset=utf-8
@@ -20,29 +20,29 @@ var server = net.createServer((socket) => {
 
     if(split[0] === "HEAD") {
       console.log('split0', split[0]);
-      process.stdout.write(response);
+      process.stdout.write(header);
     }
     else if(split[0] === "GET") {
-      if (split[1] === "/"){
-        process.stdout.write(staticContent.index_html);
+      if (split[1] === "/") {
+        process.stdout.write(header + staticContent.index_html);
       }
       else if (split[1] === "/index.html") {
-        process.stdout.write(staticContent.index_html);
+        process.stdout.write(header + staticContent.index_html);
       }
       else if (split[1] === "/hydrogen.html") {
-        process.stdout.write(staticContent.hydrogen_html);
+        process.stdout.write(header + staticContent.hydrogen_html);
       }
       else if (split[1] === "/helium.html") {
-        process.stdout.write(staticContent.helium_html);
+        process.stdout.write(header + staticContent.helium_html);
       }
       else if (split[1] === "/404.html") {
-        process.stdout.write(staticContent.error_html);
+        process.stdout.write(header + staticContent.error_html);
       }
       else if (split[1] === "/css/styles.css") {
-        process.stdout.write(staticContent.styles_css);
+        process.stdout.write(header + staticContent.styles_css);
       }
       else {
-        process.stdout.write(staticContent.error_html);
+        process.stdout.write(header + staticContent.error_html);
       }
     }
   });
