@@ -1,54 +1,71 @@
-const net = require('net');
-const timestamp = new Date();
-const staticContent = require('./staticContent');
+ const net = require('net'); //need to require net module to be able to use all the functions within it
 
-var server = net.createServer((socket) => {
+const staticContent = require('./staticcontent.js');
+const timeStamp = new Date();
 
-  socket.setEncoding('utf8');
 
-  socket.on('data', (chunk) => {
 
-    var string = chunk;
-    var split = string.split(" ");
+//clientSocket is a readable and writeable stream
+var server = net.createServer((clientSocket) => {
 
-    var header = `HTTP/1.1 200 OK
-    Server: nginx/1.4.6 (Ubuntu)
-    Date: ${timestamp}
-    Content-Type: text/html; charset=utf-8
-    Content-Length: 40489
-    Connection: keep-alive\n`;
+  //read data from socket as utf8 formatted text
+  clientSocket.setEncoding('utf8');
 
-    if(split[0] === "HEAD") {
-      console.log('split0', split[0]);
-      socket.write(header);
+clientSocket.on('data', (httpRequest) => {
+  var split = httpRequest.split('\r\n');
+
+
+  //parse the client's http request headers
+  var requestLine = split[0];
+  var requestLineSplit = requestLine.split(' ');
+  var requestMethod = requestLineSplit[0];
+  var requestURI = requestLineSplit[1];
+
+  function generateResponseHeaders(statusCode,contentLength, contentType){
+
+  var responseHeaders =`HTTP/1.1 ${statusCode}
+Server: nginx/1.4.6 (Ubuntu)
+Date: ${timeStamp}
+Content-Type: ${contentType}
+Content-Length: ${contentLength}\n\n`;
+
+  return responseHeaders;
+    //return headers as a string
+
+
+  }
+
+
+  if(requestMethod === 'GET'){
+    if(requestURI === '/'){
+      clientSocket.write(generateResponseHeaders('200 OK', staticContent.index_html.length, 'text/html; charset=utf-8') + staticContent.index_html);
+      clientSocket.end();
+    }else if (requestURI == '/index.html'){
+      clientSocket.write(generateResponseHeaders('200 OK', staticContent.index_html.length, 'text/html; charset=utf-8') + staticContent.index_html);
+      clientSocket.end();
+    }else if(requestURI === '/hydrogen.html'){
+      clientSocket.write(generateResponseHeaders('200 OK', staticContent.hydrogen_html.length, 'text/html; charset=utf-8') + staticContent.hydrogen_html);
+      clientSocket.end();
+    }else if(requestURI === '/helium.html'){
+      clientSocket.write(generateResponseHeaders('200 OK', staticContent.helium_html.length, 'text/html; charset=utf-8') + staticContent.helium_html);
+      clientSocket.end();
+    // }else if(requestURI === '/404.html'){
+    //   clientSocket.write(generateResponseHeaders(staticContent.error_html.length) + staticContent.error_html);
+    //   clientSocket.end();
+    }else if(requestURI === '/css/styles.css'){
+      clientSocket.write(generateResponseHeaders('200 OK', staticContent.styles_css.length, 'text/css; charset=utf-8') + staticContent.styles_css);
+      clientSocket.end();
+    }else{
+      clientSocket.write(generateResponseHeaders('404 NOT FOUND',staticContent.error_html.length, 'text/html; charset=utf-8') + staticContent.error_html);
+      clientSocket.end();
     }
-    else if(split[0] === "GET") {
-      if (split[1] === "/") {
-        socket.write(header + staticContent.index_html);
-      }
-      else if (split[1] === "/index.html") {
-        socket.write(header + staticContent.index_html);
-      }
-      else if (split[1] === "/hydrogen.html") {
-        socket.write(header + staticContent.hydrogen_html);
-      }
-      else if (split[1] === "/helium.html") {
-        socket.write(header + staticContent.helium_html);
-      }
-      else if (split[1] === "/404.html") {
-        socket.write(header + staticContent.error_html);
-      }
-      else if (split[1] === "/css/styles.css") {
-        socket.write(header + staticContent.styles_css);
-      }
-      else {
-        socket.write(header + staticContent.error_html);
-      }
-    }
-    socket.end();
-  });
+  }
+
 });
 
-server.listen(8080, 'localhost', () => {
+});
+
+server.listen(8080, 'localhost', ()=> {
   console.log('opened server on', server.address());
+
 });
